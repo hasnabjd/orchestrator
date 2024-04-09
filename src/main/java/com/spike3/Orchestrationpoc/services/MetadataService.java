@@ -1,6 +1,6 @@
 package com.spike3.Orchestrationpoc.services;
 
-import org.apache.kafka.clients.Metadata;
+import com.spike3.Orchestrationpoc.models.Metadata;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 public class MetadataService {
 
-    private static final String JSON_FILE_PATH = "metadata.json";
+    private static final String JSON_FILE_PATH = "src/main/resources/metadata.json";
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @KafkaListener(topics = "mf-metadata-topic", groupId = "orchestrationGroup")
@@ -31,8 +31,22 @@ public class MetadataService {
                 metadataList = new ArrayList<>();
             }
 
-            // Ajouter les métadonnées à la liste
-            metadataList.add(metadata);
+            // Vérifier si une métadonnée avec le même nom existe déjà
+            boolean found = false;
+            for (int i = 0; i < metadataList.size(); i++) {
+                Metadata existingMetadata = metadataList.get(i);
+                if (existingMetadata.getName().equals(metadata.getName())) {
+                    // Mettre à jour la métadonnée existante
+                    metadataList.set(i, metadata);
+                    found = true;
+                    break;
+                }
+            }
+
+            // Si aucune métadonnée avec le même nom n'a été trouvée, ajouter la nouvelle métadonnée
+            if (!found) {
+                metadataList.add(metadata);
+            }
 
             // Écrire la liste mise à jour dans le fichier JSON
             objectMapper.writeValue(new File(JSON_FILE_PATH), metadataList);

@@ -1,0 +1,1 @@
+[{"name":"marketing","remoteEntryUrl":"http://localhost:8081/remoteEntry.js","version":"1.2.3","dependencies":{"vue":"3.0.5"},"permissions":["view_marketing_material","submit_feedback"],"env":{"API_URL":"http://localhost:8081/api"}}]

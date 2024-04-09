@@ -5,15 +5,15 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/metadata")
 public class MetadataController {
 
-    private static final String JSON_FILE_PATH = "metadata.json";
+    private static final String JSON_FILE_PATH = "src/main/resources/metadata.json";
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping
@@ -41,18 +41,87 @@ public class MetadataController {
         return null;
     }
 
-    @GetMapping("/{name}/{version}")
-    public Metadata getMetadataByNameAndVersion(@PathVariable String name, @PathVariable String version) {
+    @PostMapping
+    public String addMetadata(@RequestBody Metadata metadata) {
         try {
+            // Lire les métadonnées existantes
             Metadata[] metadataArray = objectMapper.readValue(new File(JSON_FILE_PATH), Metadata[].class);
-            for (Metadata metadata : metadataArray) {
-                if (metadata.getName().equals(name) && metadata.getVersion().equals(version)) {
-                    return metadata;
+
+            // Vérifier si la métadonnée existe déjà
+            for (Metadata existingMetadata : metadataArray) {
+                if (existingMetadata.getName().equals(metadata.getName())) {
+                    return "Metadata with the same name already exists. Please use PUT to update it.";
                 }
             }
+
+            // Ajouter la nouvelle métadonnée à la liste
+            List<Metadata> metadataList = new ArrayList<>(Arrays.asList(metadataArray));
+            metadataList.add(metadata);
+
+            // Écrire la liste mise à jour dans le fichier JSON
+            objectMapper.writeValue(new File(JSON_FILE_PATH), metadataList);
+
+            return "Metadata added successfully.";
         } catch (IOException e) {
             e.printStackTrace();
+            return "Failed to add metadata.";
         }
-        return null;
+    }
+
+    @PutMapping("/{name}")
+    public String updateMetadata(@PathVariable String name, @RequestBody Metadata updatedMetadata) {
+        try {
+            // Lire les métadonnées existantes
+            Metadata[] metadataArray = objectMapper.readValue(new File(JSON_FILE_PATH), Metadata[].class);
+
+            // Mettre à jour la métadonnée avec le même nom
+            boolean found = false;
+            for (int i = 0; i < metadataArray.length; i++) {
+                Metadata existingMetadata = metadataArray[i];
+                if (existingMetadata.getName().equals(name)) {
+                    metadataArray[i] = updatedMetadata;
+                    found = true;
+                    break;
+                }
+            }
+
+            // Si aucune métadonnée avec le même nom n'a été trouvée, retourner une erreur
+            if (!found) {
+                return "Metadata not found.";
+            }
+
+            // Écrire la liste mise à jour dans le fichier JSON
+            objectMapper.writeValue(new File(JSON_FILE_PATH), Arrays.asList(metadataArray));
+
+            return "Metadata updated successfully.";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Failed to update metadata.";
+        }
+    }
+
+    @DeleteMapping("/{name}")
+    public String deleteMetadata(@PathVariable String name) {
+        try {
+            // Lire les métadonnées existantes
+            Metadata[] metadataArray = objectMapper.readValue(new File(JSON_FILE_PATH), Metadata[].class);
+
+            // Supprimer la métadonnée avec le même nom
+            List<Metadata> metadataList = new ArrayList<>(Arrays.asList(metadataArray));
+            boolean removed = metadataList.removeIf(metadata -> metadata.getName().equals(name));
+
+            // Si aucune métadonnée avec le même nom n'a été trouvée, retourner une erreur
+            if (!removed) {
+                return "Metadata not found.";
+            }
+
+            // Écrire la liste mise à jour dans le fichier JSON
+            objectMapper.writeValue(new File(JSON_FILE_PATH), metadataList);
+
+            return "Metadata deleted successfully.";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Failed to delete metadata.";
+        }
     }
 }
