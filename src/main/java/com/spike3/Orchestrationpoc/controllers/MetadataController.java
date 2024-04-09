@@ -100,28 +100,5 @@ public class MetadataController {
         }
     }
 
-    @DeleteMapping("/{name}")
-    public String deleteMetadata(@PathVariable String name) {
-        try {
-            // Lire les métadonnées existantes
-            Metadata[] metadataArray = objectMapper.readValue(new File(JSON_FILE_PATH), Metadata[].class);
 
-            // Supprimer la métadonnée avec le même nom
-            List<Metadata> metadataList = new ArrayList<>(Arrays.asList(metadataArray));
-            boolean removed = metadataList.removeIf(metadata -> metadata.getName().equals(name));
-
-            // Si aucune métadonnée avec le même nom n'a été trouvée, retourner une erreur
-            if (!removed) {
-                return "Metadata not found.";
-            }
-
-            // Écrire la liste mise à jour dans le fichier JSON
-            objectMapper.writeValue(new File(JSON_FILE_PATH), metadataList);
-
-            return "Metadata deleted successfully.";
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "Failed to delete metadata.";
-        }
-    }
 }
